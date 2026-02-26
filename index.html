@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>No one — Shop System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    .card { background: white; padding: 15px; border-radius: 12px; margin: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.08);} 
+    input, button { padding: 10px; margin: 5px 0; width: 100%; }
+    button { cursor: pointer; border: none; border-radius: 8px; background: black; color: white; }
+    img { max-width: 200px; }
+    a { color: blue; }
+  </style>
+</head>
+<body>
+
+<h1>ร้าน No one</h1>
+
+<div class="card">
+  <h2>สมัคร / เข้าสู่ระบบ</h2>
+  <input type="email" id="email" placeholder="อีเมล" />
+  <input type="password" id="password" placeholder="รหัสผ่าน" />
+  <button onclick="signup()">สมัครสมาชิก</button>
+  <button onclick="login()">เข้าสู่ระบบ</button>
+</div>
+
+<div class="card">
+  <h2>สินค้า</h2>
+  <div id="products">กำลังโหลด...</div>
+</div>
+
+<div class="card">
+  <h2>ชำระเงิน PromptPay</h2>
+  <input id="amount" placeholder="จำนวนเงิน" />
+  <button onclick="genQR()">สร้าง QR</button>
+  <div id="qr"></div>
+</div>
+
+<div class="card">
+  <h2>อัปโหลดสลิป</h2>
+  <input type="file" id="slip" />
+  <button onclick="uploadSlip()">ส่งสลิป</button>
+</div>
+
+<div class="card" id="myOrdersBox" style="display:none">
+  <h2>ออเดอร์ของฉัน</h2>
+  <div id="myOrders"></div>
+</div>
+
+<div class="card" id="adminPanel" style="display:none">
+  <h2>แอดมิน</h2>
+  <h3>เพิ่มสินค้า</h3>
+  <input id="pname" placeholder="ชื่อสินค้า" />
+  <input id="pprice" placeholder="ราคา" />
+  <input id="pfile" placeholder="ลิงก์ไฟล์สินค้า (ส่งอัตโนมัติ)" />
+  <button onclick="addProduct()">เพิ่มสินค้า</button>
+
+  <h3>รายการสั่งซื้อ</h3>
+  <div id="adminOrders"></div>
+</div>
+
+<script>
+  const supabaseUrl = "https://fmykgxcnrbzjcwsezthk.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZteWtneGNucmJ6amN3c2V6dGhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTMwNDgsImV4cCI6MjA4NzY4OTA0OH0.HUTrlmh2fNLS1OFXhYv_MsF0uiJLhUMXYSvsppsgOsY";
+  const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+  const ADMIN_EMAIL = "oil166922@gmail.com";
+  let currentUser = null;
+
+  async function signup() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const { error } = await client.auth.signUp({ email, password });
+    alert(error ? error.message : "สมัครสำเร็จ");
+  }
+
+  async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+    if (!error) {
+      currentUser = data.user;
+      document.getElementById("myOrdersBox").style.display = "block";
+      loadMyOrders();
+
+      if (currentUser.email === ADMIN_EMAIL) {
+        document.getElementById("adminPanel").style.display = "block";
+        loadAdminOrders();
+      }
+    }
+
+    alert(error ? error.message : "เข้าสู่ระบบสำเร็จ");
+  }
+
+  async function loadProducts() {
+    const { data } = await client.from("products").select("*");
+    const el = document.getElementById("products");
+    el.innerHTML = "";
+
+    data.forEach(p => {
+      el.innerHTML += `
+        <div class="card">
+          <h3>${p.name}</h3>
+          <p>${p.price} บาท</p>
+          <button onclick="buy('${p.id}',${p.price})">ซื้อ</button>
+        </div>
+      `;
+    });
+  }
+
+  loadProducts();
+
+  async function buy(productId, price) {
+    const { data: userData } = await client.auth.getUser();
+    if (!userData.user) return alert("กรุณา login ก่อน");
+
+    await client.from("orders").insert({
+      user_id: userData.user.id,
+      product_id: productId,
+      price: price,
+      status: 'pending'
+    });
+
+    alert("สั่งซื้อแล้ว กรุณาชำระเงิน");
+  }
+
+  async function uploadSlip() {
+    const file = document.getElementById("slip").files[0];
+    if (!file) return alert("เลือกไฟล์ก่อน");
+
+    const fileName = Date.now() + "-" + file.name;
+
+    const { error } = await client.storage
+      .from("slips")
+      .upload(fileName, file);
+
+    alert(error ? error.message : "อัปโหลดสำเร็จ รอแอดมินตรวจสอบ");
+  }
+
+  async function addProduct(){
+    const name = document.getElementById("pname").value;
+    const price = document.getElementById("pprice").value;
+    const file_url = document.getElementById("pfile").value;
+
+    await client.from("products").insert({ name, price, file_url });
+    alert("เพิ่มสินค้าแล้ว");
+    loadProducts();
+  }
+
+  function genQR(){
+    const amount = document.getElementById("amount").value || 0;
+    const phone = "1159900533798";
+    const img = `https://promptpay.io/${phone}/${amount}`;
+    document.getElementById("qr").innerHTML = `<img src="${img}" />`;
+  }
+
+  async function loadMyOrders(){
+    const { data: userData } = await client.auth.getUser();
+    const { data } = await client
+      .from('orders')
+      .select('*, products(name,file_url)')
+      .eq('user_id', userData.user.id);
+
+    const el = document.getElementById('myOrders');
+    el.innerHTML = '';
+
+    data.forEach(o => {
+      el.innerHTML += `
+        <div class="card">
+          <p>สินค้า: ${o.products?.name || ''}</p>
+          <p>สถานะ: ${o.status}</p>
+          ${o.status === 'approved' && o.products?.file_url ? `<a href="${o.products.file_url}" target="_blank">ดาวน์โหลดสินค้า</a>` : ''}
+        </div>
+      `;
+    });
+  }
+
+  async function loadAdminOrders(){
+    const { data } = await client
+      .from('orders')
+      .select('*, products(name)');
+
+    const el = document.getElementById('adminOrders');
+    el.innerHTML = '';
+
+    data.forEach(o => {
+      el.innerHTML += `
+        <div class="card">
+          <p>${o.products?.name || ''} — ${o.price} บาท</p>
+          <p>สถานะ: ${o.status}</p>
+          <button onclick="approveOrder('${o.id}')">อนุมัติ</button>
+        </div>
+      `;
+    });
+  }
+
+  async function approveOrder(id){
+    await client.from('orders').update({ status:'approved' }).eq('id', id);
+    alert('อนุมัติแล้ว ลูกค้าจะเห็นลิงก์ดาวน์โหลด');
+    loadAdminOrders();
+  }
+</script>
+
+</body>
+</html>
