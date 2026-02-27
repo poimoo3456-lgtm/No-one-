@@ -1,143 +1,170 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>No One Shop</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRO STORE V2</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#0f0f0f,#1a1a1a,#000);
-  color:white;
-}
-.container{
-  max-width:420px;
-  margin:auto;
-  padding:20px;
-}
-.card{
-  background: rgba(255,255,255,0.05);
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:10px;
-  border:none;
-}
-button{
-  background:black;
-  color:white;
-  font-weight:bold;
-}
-h1{text-align:center}
+body{margin:0;background:#0f172a;color:white;font-family:sans-serif}
+nav{display:flex;gap:15px;padding:15px;background:#111827}
+nav button{background:none;border:none;color:white;cursor:pointer;font-size:16px}
+.section{display:none;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.card{background:#1e293b;padding:15px;border-radius:15px;text-align:center}
+.card img{width:100%;height:150px;object-fit:cover;border-radius:10px}
+input,select{padding:8px;width:100%;margin:5px 0;border-radius:8px;border:none}
+button.main{background:#22c55e;color:black;padding:8px;border:none;border-radius:8px;cursor:pointer}
+button.del{background:#ef4444;color:white;margin-top:5px}
+.status{font-weight:bold}
 </style>
 </head>
 <body>
 
-<div class="container">
-<h1>🔥 NO ONE SHOP</h1>
+<nav id="navbar"></nav>
 
-<div class="card">
-<h3>ผู้จัดการระบบ</h3>
-<input id="adminPhone" placeholder="เบอร์" />
-<input id="adminPass" placeholder="รหัส" type="password" />
-<button onclick="adminLogin()">เข้าสู่ระบบแอดมิน</button>
-</div>
-
-<div class="card">
-<h3>สมัคร / เข้าสู่ระบบลูกค้า</h3>
-<input id="email" placeholder="Email" />
-<input id="password" placeholder="Password" type="password" />
-<button onclick="register()">สมัคร</button>
-<button onclick="login()">Login</button>
-</div>
-
-<div class="card" id="shop">
-<h3>สินค้า</h3>
-<div id="productList"></div>
-</div>
-
-<div class="card">
-<h3>ชำระเงิน PromptPay</h3>
-<input id="amount" placeholder="จำนวนเงิน" />
-<button onclick="genQR()">สร้าง QR</button>
-<div id="qr"></div>
-</div>
-
-</div>
+<div id="shop" class="section"></div>
+<div id="orders" class="section"></div>
+<div id="admin" class="section"></div>
 
 <script>
-const supabaseUrl = "https://fmykgxcnrbzjcwsezthk.supabase.co";
-const supabaseKey = "YOUR_ANON_KEY";
-const db = supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(
+"https://fmykgxcnrbzjcwsezthk.supabase.co",
+"sb_publishable_AwAtOhcZiPWiz-VQuKPjWQ_XGvll29G"
+)
 
-// ADMIN LOGIN
-function adminLogin(){
-  const phone = document.getElementById("adminPhone").value;
-  const pass = document.getElementById("adminPass").value;
+const adminEmail="oil166922@gmail.com"
+let currentUser=null
 
-  if(phone === "0637695934" && pass === "1669"){
-    alert("เข้าสู่ระบบแอดมินสำเร็จ");
-  }else{
-    alert("ข้อมูลไม่ถูกต้อง");
+async function init(){
+  const { data } = await supabase.auth.getUser()
+  currentUser=data.user
+  if(!currentUser){
+    const email=prompt("Email")
+    const pass=prompt("Password")
+    await supabase.auth.signInWithPassword({email:email,password:pass})
+    location.reload()
+  }
+  buildNav()
+  show("shop")
+  loadProducts()
+  loadOrders()
+}
+
+function buildNav(){
+  const nav=document.getElementById("navbar")
+  nav.innerHTML=`
+    <button onclick="show('shop')">หน้าร้าน</button>
+    <button onclick="show('orders')">ออเดอร์</button>
+    ${currentUser.email===adminEmail?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
+    <button onclick="logout()">ออก</button>
+  `
+}
+
+function show(section){
+  document.querySelectorAll(".section").forEach(s=>s.style.display="none")
+  document.getElementById(section).style.display="block"
+}
+
+async function loadProducts(){
+  const { data } = await supabase.from("products").select("*")
+  const shop=document.getElementById("shop")
+  shop.innerHTML="<h2>สินค้า</h2><div class='grid' id='plist'></div>"
+  const plist=document.getElementById("plist")
+  data.forEach(p=>{
+    plist.innerHTML+=`
+    <div class="card">
+      <img src="${p.image||'https://via.placeholder.com/300'}">
+      <h4>${p.name}</h4>
+      <div>${p.price} บาท</div>
+      <button class="main" onclick="orderProduct('${p.name}',${p.price})">สั่งซื้อ</button>
+    </div>`
+  })
+}
+
+async function orderProduct(name,price){
+  await supabase.from("orders").insert([{
+    user_email:currentUser.email,
+    product_name:name,
+    price:price
+  }])
+  alert("สั่งซื้อแล้ว")
+  loadOrders()
+}
+
+async function loadOrders(){
+  const { data } = await supabase.from("orders").select("*")
+  const ordersDiv=document.getElementById("orders")
+  ordersDiv.innerHTML="<h2>ออเดอร์</h2>"
+  
+  let total=0
+
+  data.forEach(o=>{
+    if(currentUser.email===adminEmail || o.user_email===currentUser.email){
+      total+=Number(o.price)
+      ordersDiv.innerHTML+=`
+      <div class="card">
+        <div>${o.product_name}</div>
+        <div>${o.price} บาท</div>
+        <div class="status">สถานะ: ${o.status}</div>
+        ${o.slip?`<img src="${o.slip}" height="80">`:''}
+        ${currentUser.email!==adminEmail?`
+          <input placeholder="ลิงก์สลิป" onchange="uploadSlip('${o.id}',this.value)">
+        `:''}
+        ${currentUser.email===adminEmail?`
+          <select onchange="updateStatus('${o.id}',this.value)">
+            <option>รอดำเนินการ</option>
+            <option>อนุมัติ</option>
+            <option>ยกเลิก</option>
+          </select>
+        `:''}
+      </div>`
+    }
+  })
+
+  if(currentUser.email===adminEmail){
+    ordersDiv.innerHTML+=`<h3>ยอดรวม: ${total} บาท</h3>`
+  }
+
+  if(currentUser.email===adminEmail){
+    buildAdmin()
   }
 }
 
-// REGISTER
-async function register(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const {error} = await db.auth.signUp({email,password});
-  if(error) alert(error.message);
-  else alert("สมัครสำเร็จ");
+async function uploadSlip(id,link){
+  await supabase.from("orders").update({slip:link}).eq("id",id)
 }
 
-// LOGIN
-async function login(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const {error} = await db.auth.signInWithPassword({email,password});
-  if(error) alert(error.message);
-  else alert("เข้าสู่ระบบสำเร็จ");
+async function updateStatus(id,status){
+  await supabase.from("orders").update({status:status}).eq("id",id)
+  loadOrders()
 }
 
-// PRODUCTS DEMO
-const products = [
-  {name:"สินค้า A",price:100},
-  {name:"สินค้า B",price:200}
-];
-
-function loadProducts(){
-  const el = document.getElementById("productList");
-  products.forEach(p=>{
-    el.innerHTML += `<div>${p.name} - ${p.price} บาท <button onclick="buy(${p.price})">ซื้อ</button></div>`;
-  });
-}
-loadProducts();
-
-function buy(price){
-  document.getElementById("amount").value = price;
-  alert("กรุณาชำระเงิน");
+function buildAdmin(){
+  const admin=document.getElementById("admin")
+  admin.innerHTML=`
+    <h2>เพิ่มสินค้า</h2>
+    <input id="pname" placeholder="ชื่อสินค้า">
+    <input id="pprice" type="number" placeholder="ราคา">
+    <input id="pimage" placeholder="ลิงก์รูป">
+    <button class="main" onclick="addProduct()">เพิ่ม</button>
+  `
 }
 
-// PROMPTPAY QR
-function genQR(){
-  const amount = document.getElementById("amount").value;
-  const phone = "1159900533798";
-  const url = `https://promptpay.io/${phone}/${amount}`;
-  document.getElementById("qr").innerHTML = `<img src="${url}" width="200">`;
+async function addProduct(){
+  const name=pname.value
+  const price=pprice.value
+  const image=pimage.value
+  await supabase.from("products").insert([{name,price,image}])
+  loadProducts()
 }
+
+function logout(){
+  supabase.auth.signOut()
+  location.reload()
+}
+
+init()
 </script>
-
 </body>
 </html>
