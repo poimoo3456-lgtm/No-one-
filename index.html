@@ -3,34 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRO STORE 2.0</title>
+<title>PRO STORE OTP</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, "Sarabun", sans-serif;
-  background:#0f172a;
-  color:white;
-}
+body{margin:0;font-family:system-ui;background:#0f172a;color:white}
 .center{display:flex;justify-content:center;align-items:center;height:100vh}
 .box{background:#1e293b;padding:30px;border-radius:15px;width:320px}
-input{
-  width:100%;
-  padding:12px;
-  margin:6px 0;
-  border-radius:10px;
-  border:none;
-  font-size:16px;
-}
-button{
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  width:100%;
-  font-size:15px;
-}
+input{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:none;font-size:16px}
+button{padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%}
 .main{background:#22c55e;color:black}
 nav{display:flex;gap:10px;padding:15px;background:#111827}
 .section{display:none;padding:20px}
@@ -43,12 +24,17 @@ nav{display:flex;gap:10px;padding:15px;background:#111827}
 
 <div id="auth" class="center">
   <div class="box">
-    <h2>เข้าสู่ระบบ</h2>
-    <input id="email" placeholder="อีเมล หรือ เบอร์">
-    <input id="password" type="password" placeholder="รหัสผ่าน">
-    <button class="main" onclick="login()">เข้าสู่ระบบ</button>
-    <button onclick="register()">สมัครสมาชิก</button>
-    <p id="authMsg"></p>
+    <h2>เข้าสู่ระบบด้วย OTP</h2>
+
+    <input id="phone" placeholder="เบอร์ 0xxxxxxxxx">
+    <button class="main" onclick="sendOTP()">ส่ง OTP</button>
+
+    <div id="otpBox" style="display:none">
+      <input id="otp" placeholder="กรอกรหัส OTP">
+      <button onclick="verifyOTP()">ยืนยัน</button>
+    </div>
+
+    <p id="msg"></p>
   </div>
 </div>
 
@@ -65,54 +51,51 @@ const supabase = window.supabase.createClient(
 "sb_publishable_AwAtOhcZiPWiz-VQuKPjWQ_XGvll29G"
 )
 
-const specialPhone="0637695934"
-const specialPass="1669"
-const adminEmail="oil166922@gmail.com"
+const adminPhone="0637695934"
 
 let user=null
-let isSpecialAdmin=false
+let isAdmin=false
 
-async function login(){
-  const email=document.getElementById("email").value.trim()
-  const password=document.getElementById("password").value.trim()
+async function sendOTP(){
+  const phone=document.getElementById("phone").value.trim()
+  const formatted='+66'+phone.substring(1)
 
-  // 🔥 บัญชีพิเศษ
-  if(email===specialPhone && password===specialPass){
-    user={ email:"admin@phone.local" }
-    isSpecialAdmin=true
-    startApp()
-    return
-  }
-
-  // 🔹 ปกติใช้ Supabase
-  const { data, error } = await supabase.auth.signInWithPassword({email,password})
+  const { error } = await supabase.auth.signInWithOtp({
+    phone: formatted
+  })
 
   if(error){
-    document.getElementById("authMsg").innerText=error.message
+    msg.innerText=error.message
+  }else{
+    msg.innerText="ส่ง OTP แล้ว"
+    otpBox.style.display="block"
+  }
+}
+
+async function verifyOTP(){
+  const phone=document.getElementById("phone").value.trim()
+  const token=document.getElementById("otp").value.trim()
+  const formatted='+66'+phone.substring(1)
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone: formatted,
+    token: token,
+    type: 'sms'
+  })
+
+  if(error){
+    msg.innerText=error.message
     return
   }
 
   user=data.user
+  if(phone===adminPhone) isAdmin=true
   startApp()
-}
-
-async function register(){
-  const email=document.getElementById("email").value.trim()
-  const password=document.getElementById("password").value.trim()
-
-  const { error } = await supabase.auth.signUp({email,password})
-
-  if(error){
-    document.getElementById("authMsg").innerText=error.message
-  }else{
-    document.getElementById("authMsg").innerText="สมัครสำเร็จ กรุณาล็อกอิน"
-  }
 }
 
 function startApp(){
   document.getElementById("auth").style.display="none"
   document.getElementById("app").style.display="block"
-
   buildNav()
   show("shop")
   loadProducts()
@@ -120,11 +103,10 @@ function startApp(){
 }
 
 function buildNav(){
-  const nav=document.getElementById("navbar")
-  nav.innerHTML=`
+  navbar.innerHTML=`
     <button onclick="show('shop')">สินค้า</button>
     <button onclick="show('orders')">ออเดอร์</button>
-    ${(user.email===adminEmail || isSpecialAdmin)?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
+    ${isAdmin?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
     <button onclick="logout()">ออก</button>
   `
 }
@@ -136,7 +118,6 @@ function show(sec){
 
 async function loadProducts(){
   const { data } = await supabase.from("products").select("*")
-  const shop=document.getElementById("shop")
   shop.innerHTML="<h2>สินค้า</h2><div class='grid'></div>"
   const grid=shop.querySelector(".grid")
 
@@ -153,57 +134,61 @@ async function loadProducts(){
 
 async function order(name,price){
   await supabase.from("orders").insert([{
-    user_email:user.email,
+    user_email:user.phone,
     product_name:name,
     price:price
   }])
-  alert("สั่งซื้อสำเร็จ")
-  loadOrders()
+
+  const qr=`https://promptpay.io/0637695934/${price}.png`
+
+  orders.innerHTML=`
+    <div class="card">
+      <h3>สแกนจ่าย ${price} บาท</h3>
+      <img src="${qr}">
+    </div>
+  `
+
+  show("orders")
 }
 
 async function loadOrders(){
   const { data } = await supabase.from("orders").select("*")
-  const orders=document.getElementById("orders")
   orders.innerHTML="<h2>ออเดอร์</h2>"
 
   data?.forEach(o=>{
-    if(user.email===adminEmail || isSpecialAdmin || o.user_email===user.email){
+    if(isAdmin || o.user_email===user.phone){
       orders.innerHTML+=`
       <div class="card">
         <div>${o.product_name}</div>
         <div>${o.price} บาท</div>
-        <div>สถานะ: ${o.status}</div>
       </div>`
     }
   })
 
-  if(user.email===adminEmail || isSpecialAdmin){
-    buildAdmin()
-  }
+  if(isAdmin) buildAdmin()
 }
 
 function buildAdmin(){
-  const admin=document.getElementById("admin")
   admin.innerHTML=`
     <h2>เพิ่มสินค้า</h2>
-    <input id="pname" placeholder="ชื่อสินค้า (รองรับภาษาไทย)">
+    <input id="pname" placeholder="ชื่อสินค้า">
     <input id="pprice" type="number" placeholder="ราคา">
-    <input id="pimage" placeholder="ลิงก์รูปภาพ">
-    <button onclick="addProduct()">เพิ่มสินค้า</button>
+    <input id="pimage" placeholder="ลิงก์รูป">
+    <button onclick="addProduct()">เพิ่ม</button>
   `
 }
 
 async function addProduct(){
-  const name=document.getElementById("pname").value
-  const price=document.getElementById("pprice").value
-  const image=document.getElementById("pimage").value
-
+  const name=pname.value
+  const price=pprice.value
+  const image=pimage.value
   await supabase.from("products").insert([{name,price,image}])
-  alert("เพิ่มสินค้าเรียบร้อย")
+  alert("เพิ่มสินค้าแล้ว")
   loadProducts()
 }
 
 function logout(){
+  supabase.auth.signOut()
   location.reload()
 }
 </script>
