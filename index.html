@@ -3,29 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRO STORE V2</title>
+<title>PRO STORE FINAL</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{margin:0;background:#0f172a;color:white;font-family:sans-serif}
+body{margin:0;font-family:sans-serif;background:#0f172a;color:white}
+.center{display:flex;justify-content:center;align-items:center;height:100vh}
+.box{background:#1e293b;padding:30px;border-radius:15px;width:320px}
+input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:none}
+button{padding:10px;border:none;border-radius:8px;cursor:pointer}
+.main{background:#22c55e;color:black;width:100%}
 nav{display:flex;gap:15px;padding:15px;background:#111827}
-nav button{background:none;border:none;color:white;cursor:pointer;font-size:16px}
 .section{display:none;padding:20px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
 .card{background:#1e293b;padding:15px;border-radius:15px;text-align:center}
 .card img{width:100%;height:150px;object-fit:cover;border-radius:10px}
-input,select{padding:8px;width:100%;margin:5px 0;border-radius:8px;border:none}
-button.main{background:#22c55e;color:black;padding:8px;border:none;border-radius:8px;cursor:pointer}
-button.del{background:#ef4444;color:white;margin-top:5px}
-.status{font-weight:bold}
 </style>
 </head>
 <body>
 
-<nav id="navbar"></nav>
+<div id="auth" class="center">
+  <div class="box">
+    <h2>เข้าสู่ระบบ</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button class="main" onclick="login()">Login</button>
+    <br><br>
+    <button onclick="register()">สมัครสมาชิก</button>
+    <p id="authMsg"></p>
+  </div>
+</div>
 
-<div id="shop" class="section"></div>
-<div id="orders" class="section"></div>
-<div id="admin" class="section"></div>
+<div id="app" style="display:none;">
+  <nav id="navbar"></nav>
+
+  <div id="shop" class="section"></div>
+  <div id="orders" class="section"></div>
+  <div id="admin" class="section"></div>
+</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -34,17 +48,39 @@ const supabase = window.supabase.createClient(
 )
 
 const adminEmail="oil166922@gmail.com"
-let currentUser=null
+let user=null
 
-async function init(){
-  const { data } = await supabase.auth.getUser()
-  currentUser=data.user
-  if(!currentUser){
-    const email=prompt("Email")
-    const pass=prompt("Password")
-    await supabase.auth.signInWithPassword({email:email,password:pass})
-    location.reload()
+async function login(){
+  const email=emailInput().value
+  const password=passwordInput().value
+  const { data, error } = await supabase.auth.signInWithPassword({email,password})
+  if(error){
+    authMsg().innerText=error.message
+    return
   }
+  user=data.user
+  startApp()
+}
+
+async function register(){
+  const email=emailInput().value
+  const password=passwordInput().value
+  const { error } = await supabase.auth.signUp({email,password})
+  if(error){
+    authMsg().innerText=error.message
+  }else{
+    authMsg().innerText="สมัครสำเร็จ ล็อกอินได้เลย"
+  }
+}
+
+function emailInput(){return document.getElementById("email")}
+function passwordInput(){return document.getElementById("password")}
+function authMsg(){return document.getElementById("authMsg")}
+
+async function startApp(){
+  document.getElementById("auth").style.display="none"
+  document.getElementById("app").style.display="block"
+
   buildNav()
   show("shop")
   loadProducts()
@@ -54,90 +90,60 @@ async function init(){
 function buildNav(){
   const nav=document.getElementById("navbar")
   nav.innerHTML=`
-    <button onclick="show('shop')">หน้าร้าน</button>
+    <button onclick="show('shop')">สินค้า</button>
     <button onclick="show('orders')">ออเดอร์</button>
-    ${currentUser.email===adminEmail?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
+    ${user.email===adminEmail?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
     <button onclick="logout()">ออก</button>
   `
 }
 
-function show(section){
+function show(sec){
   document.querySelectorAll(".section").forEach(s=>s.style.display="none")
-  document.getElementById(section).style.display="block"
+  document.getElementById(sec).style.display="block"
 }
 
 async function loadProducts(){
-  const { data } = await supabase.from("products").select("*")
+  const { data, error } = await supabase.from("products").select("*")
+  if(error) return
   const shop=document.getElementById("shop")
-  shop.innerHTML="<h2>สินค้า</h2><div class='grid' id='plist'></div>"
-  const plist=document.getElementById("plist")
+  shop.innerHTML="<h2>สินค้า</h2><div class='grid'></div>"
+  const grid=shop.querySelector(".grid")
   data.forEach(p=>{
-    plist.innerHTML+=`
+    grid.innerHTML+=`
     <div class="card">
       <img src="${p.image||'https://via.placeholder.com/300'}">
       <h4>${p.name}</h4>
       <div>${p.price} บาท</div>
-      <button class="main" onclick="orderProduct('${p.name}',${p.price})">สั่งซื้อ</button>
+      <button onclick="order('${p.name}',${p.price})">สั่งซื้อ</button>
     </div>`
   })
 }
 
-async function orderProduct(name,price){
+async function order(name,price){
   await supabase.from("orders").insert([{
-    user_email:currentUser.email,
+    user_email:user.email,
     product_name:name,
     price:price
   }])
-  alert("สั่งซื้อแล้ว")
+  alert("สั่งซื้อสำเร็จ")
   loadOrders()
 }
 
 async function loadOrders(){
   const { data } = await supabase.from("orders").select("*")
-  const ordersDiv=document.getElementById("orders")
-  ordersDiv.innerHTML="<h2>ออเดอร์</h2>"
-  
-  let total=0
-
+  const orders=document.getElementById("orders")
+  orders.innerHTML="<h2>ออเดอร์</h2>"
   data.forEach(o=>{
-    if(currentUser.email===adminEmail || o.user_email===currentUser.email){
-      total+=Number(o.price)
-      ordersDiv.innerHTML+=`
+    if(user.email===adminEmail || o.user_email===user.email){
+      orders.innerHTML+=`
       <div class="card">
         <div>${o.product_name}</div>
         <div>${o.price} บาท</div>
-        <div class="status">สถานะ: ${o.status}</div>
-        ${o.slip?`<img src="${o.slip}" height="80">`:''}
-        ${currentUser.email!==adminEmail?`
-          <input placeholder="ลิงก์สลิป" onchange="uploadSlip('${o.id}',this.value)">
-        `:''}
-        ${currentUser.email===adminEmail?`
-          <select onchange="updateStatus('${o.id}',this.value)">
-            <option>รอดำเนินการ</option>
-            <option>อนุมัติ</option>
-            <option>ยกเลิก</option>
-          </select>
-        `:''}
+        <div>สถานะ: ${o.status||'รอดำเนินการ'}</div>
       </div>`
     }
   })
-
-  if(currentUser.email===adminEmail){
-    ordersDiv.innerHTML+=`<h3>ยอดรวม: ${total} บาท</h3>`
-  }
-
-  if(currentUser.email===adminEmail){
-    buildAdmin()
-  }
-}
-
-async function uploadSlip(id,link){
-  await supabase.from("orders").update({slip:link}).eq("id",id)
-}
-
-async function updateStatus(id,status){
-  await supabase.from("orders").update({status:status}).eq("id",id)
-  loadOrders()
+  if(user.email===adminEmail) buildAdmin()
 }
 
 function buildAdmin(){
@@ -147,15 +153,16 @@ function buildAdmin(){
     <input id="pname" placeholder="ชื่อสินค้า">
     <input id="pprice" type="number" placeholder="ราคา">
     <input id="pimage" placeholder="ลิงก์รูป">
-    <button class="main" onclick="addProduct()">เพิ่ม</button>
+    <button onclick="addProduct()">เพิ่ม</button>
   `
 }
 
 async function addProduct(){
-  const name=pname.value
-  const price=pprice.value
-  const image=pimage.value
+  const name=document.getElementById("pname").value
+  const price=document.getElementById("pprice").value
+  const image=document.getElementById("pimage").value
   await supabase.from("products").insert([{name,price,image}])
+  alert("เพิ่มสินค้าแล้ว")
   loadProducts()
 }
 
@@ -164,7 +171,15 @@ function logout(){
   location.reload()
 }
 
-init()
+async function checkSession(){
+  const { data } = await supabase.auth.getUser()
+  if(data.user){
+    user=data.user
+    startApp()
+  }
+}
+
+checkSession()
 </script>
 </body>
 </html>
