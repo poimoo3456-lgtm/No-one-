@@ -1,83 +1,98 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Code, Globe, Smartphone, ShieldCheck } from "lucide-react";
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevNatt Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Prompt', sans-serif; }
+    body { background: linear-gradient(135deg,#0f172a,#1e293b); color:white; }
+    .container { max-width:1100px; margin:auto; padding:40px 20px; }
+    h1 { font-size:48px; font-weight:700; }
+    h2 { font-size:32px; margin-bottom:20px; }
+    p { color:#cbd5e1; }
+    .btn { display:inline-block; padding:14px 28px; background:#22c55e; color:white; border-radius:14px; text-decoration:none; margin-top:20px; font-weight:600; }
+    .grid { display:grid; gap:20px; }
+    .grid-3 { grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); }
+    .card { background:#1e293b; padding:25px; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,.3); }
+    .price { font-size:28px; font-weight:700; margin:10px 0; }
+    ul { margin-top:10px; }
+    li { margin-bottom:8px; color:#cbd5e1; }
+    .section { margin-top:80px; }
+    .center { text-align:center; }
+    footer { margin-top:80px; padding:30px; text-align:center; color:#94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container center">
+    <h1>DevNatt Studio</h1>
+    <p>รับทำเว็บไซต์ ระบบเติมเกม ระบบตรวจสลิป และพัฒนาโค้ดครบวงจร</p>
+    <a href="https://line.me" class="btn">ติดต่อจ้างงาน</a>
+  </div>
 
-export default function DevNattStudio() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white p-6">
-      <div className="max-w-6xl mx-auto space-y-16">
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center space-y-4"
-        >
-          <h1 className="text-4xl md:text-6xl font-bold">DevNatt Studio</h1>
-          <p className="text-lg text-gray-300">รับทำเว็บไซต์ ระบบเติมเกม ระบบตรวจสลิป และพัฒนาโค้ดครบวงจร</p>
-          <Button className="rounded-2xl px-8 py-6 text-lg">ติดต่อจ้างงาน</Button>
-        </motion.div>
-
-        {/* Services */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { icon: <Globe />, title: "เว็บไซต์ขายของ", desc: "เว็บร้านค้าออนไลน์ พร้อมระบบรับออเดอร์" },
-            { icon: <Smartphone />, title: "เว็บเติมเกม", desc: "เติมเกมอัตโนมัติ รองรับตัวแทน" },
-            { icon: <ShieldCheck />, title: "ระบบตรวจสลิป", desc: "ตรวจสอบสลิปโอนเงินอัตโนมัติ" },
-            { icon: <Code />, title: "รับแก้โค้ด", desc: "แก้บัค ปรับปรุงเว็บ เพิ่มฟีเจอร์" },
-          ].map((item, i) => (
-            <Card key={i} className="rounded-2xl bg-gray-900 shadow-xl">
-              <CardContent className="p-6 space-y-3">
-                <div className="text-3xl">{item.icon}</div>
-                <h2 className="text-xl font-semibold">{item.title}</h2>
-                <p className="text-gray-400 text-sm">{item.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Pricing */}
-        <div className="space-y-8">
-          <h2 className="text-3xl font-bold text-center">แพ็กเกจราคา</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { name: "Starter", price: "1,500 บาท", features: ["เว็บพื้นฐาน", "1 หน้า", "แก้ไขฟรี 3 วัน"] },
-              { name: "Pro", price: "3,500 บาท", features: ["หลายหน้า", "ระบบสมาชิก", "แก้ไขฟรี 7 วัน"] },
-              { name: "Ultimate", price: "7,000 บาท", features: ["ระบบเติมเกม", "ระบบตัวแทน", "ดูแล 30 วัน"] },
-            ].map((pkg, i) => (
-              <Card key={i} className="rounded-2xl bg-gray-900 shadow-2xl">
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="text-2xl font-bold">{pkg.name}</h3>
-                  <p className="text-xl">{pkg.price}</p>
-                  <ul className="text-sm text-gray-400 space-y-2">
-                    {pkg.features.map((f, idx) => (
-                      <li key={idx}>• {f}</li>
-                    ))}
-                  </ul>
-                  <Button className="w-full rounded-2xl">เลือกแพ็กเกจ</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* How We Work */}
-        <div className="space-y-6 text-center">
-          <h2 className="text-3xl font-bold">ขั้นตอนการทำงาน</h2>
-          <p className="text-gray-400">1. คุยรายละเอียดงาน → 2. สรุปราคา → 3. มัดจำ 50% → 4. พัฒนา → 5. ส่งงาน → 6. ชำระส่วนที่เหลือ</p>
-        </div>
-
-        {/* Contact */}
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl font-bold">ติดต่อจ้างงาน</h2>
-          <p className="text-gray-400">Line: @devnatt | Facebook: DevNatt Studio</p>
-          <Button className="rounded-2xl px-10 py-6 text-lg">ทักเลย</Button>
-        </div>
-
+  <div class="container section">
+    <h2 class="center">บริการของเรา</h2>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>เว็บไซต์ขายของ</h3>
+        <p>เว็บร้านค้าออนไลน์ พร้อมระบบรับออเดอร์</p>
+      </div>
+      <div class="card">
+        <h3>เว็บเติมเกม</h3>
+        <p>เติมเกมอัตโนมัติ รองรับระบบตัวแทน</p>
+      </div>
+      <div class="card">
+        <h3>ระบบตรวจสลิป</h3>
+        <p>ตรวจสอบสลิปโอนเงินอัตโนมัติ</p>
       </div>
     </div>
-  );
-}
+  </div>
+
+  <div class="container section">
+    <h2 class="center">แพ็กเกจราคา</h2>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>Starter</h3>
+        <div class="price">1,500 บาท</div>
+        <ul>
+          <li>เว็บพื้นฐาน 1 หน้า</li>
+          <li>แก้ไขฟรี 3 วัน</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Pro</h3>
+        <div class="price">3,500 บาท</div>
+        <ul>
+          <li>หลายหน้า</li>
+          <li>ระบบสมาชิก</li>
+          <li>แก้ไขฟรี 7 วัน</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Ultimate</h3>
+        <div class="price">7,000 บาท</div>
+        <ul>
+          <li>ระบบเติมเกม</li>
+          <li>ระบบตัวแทน</li>
+          <li>ดูแล 30 วัน</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container section center">
+    <h2>ขั้นตอนการทำงาน</h2>
+    <p>1. คุยรายละเอียดงาน → 2. สรุปราคา → 3. มัดจำ 50% → 4. พัฒนา → 5. ส่งงาน → 6. ชำระส่วนที่เหลือ</p>
+  </div>
+
+  <div class="container section center">
+    <h2>ติดต่อเรา</h2>
+    <p>Line: @devnatt | Facebook: DevNatt Studio</p>
+  </div>
+
+  <footer>
+    © 2026 DevNatt Studio. All rights reserved.
+  </footer>
+</body>
+</html>
