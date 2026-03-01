@@ -1,196 +1,83 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRO STORE OTP</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+import React from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Code, Globe, Smartphone, ShieldCheck } from "lucide-react";
 
-<style>
-body{margin:0;font-family:system-ui;background:#0f172a;color:white}
-.center{display:flex;justify-content:center;align-items:center;height:100vh}
-.box{background:#1e293b;padding:30px;border-radius:15px;width:320px}
-input{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:none;font-size:16px}
-button{padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%}
-.main{background:#22c55e;color:black}
-nav{display:flex;gap:10px;padding:15px;background:#111827}
-.section{display:none;padding:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
-.card{background:#1e293b;padding:15px;border-radius:15px;text-align:center}
-.card img{width:100%;height:150px;object-fit:cover;border-radius:10px}
-</style>
-</head>
-<body>
+export default function DevNattStudio() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white p-6">
+      <div className="max-w-6xl mx-auto space-y-16">
 
-<div id="auth" class="center">
-  <div class="box">
-    <h2>เข้าสู่ระบบด้วย OTP</h2>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4"
+        >
+          <h1 className="text-4xl md:text-6xl font-bold">DevNatt Studio</h1>
+          <p className="text-lg text-gray-300">รับทำเว็บไซต์ ระบบเติมเกม ระบบตรวจสลิป และพัฒนาโค้ดครบวงจร</p>
+          <Button className="rounded-2xl px-8 py-6 text-lg">ติดต่อจ้างงาน</Button>
+        </motion.div>
 
-    <input id="phone" placeholder="เบอร์ 0xxxxxxxxx">
-    <button class="main" onclick="sendOTP()">ส่ง OTP</button>
+        {/* Services */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { icon: <Globe />, title: "เว็บไซต์ขายของ", desc: "เว็บร้านค้าออนไลน์ พร้อมระบบรับออเดอร์" },
+            { icon: <Smartphone />, title: "เว็บเติมเกม", desc: "เติมเกมอัตโนมัติ รองรับตัวแทน" },
+            { icon: <ShieldCheck />, title: "ระบบตรวจสลิป", desc: "ตรวจสอบสลิปโอนเงินอัตโนมัติ" },
+            { icon: <Code />, title: "รับแก้โค้ด", desc: "แก้บัค ปรับปรุงเว็บ เพิ่มฟีเจอร์" },
+          ].map((item, i) => (
+            <Card key={i} className="rounded-2xl bg-gray-900 shadow-xl">
+              <CardContent className="p-6 space-y-3">
+                <div className="text-3xl">{item.icon}</div>
+                <h2 className="text-xl font-semibold">{item.title}</h2>
+                <p className="text-gray-400 text-sm">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-    <div id="otpBox" style="display:none">
-      <input id="otp" placeholder="กรอกรหัส OTP">
-      <button onclick="verifyOTP()">ยืนยัน</button>
+        {/* Pricing */}
+        <div className="space-y-8">
+          <h2 className="text-3xl font-bold text-center">แพ็กเกจราคา</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { name: "Starter", price: "1,500 บาท", features: ["เว็บพื้นฐาน", "1 หน้า", "แก้ไขฟรี 3 วัน"] },
+              { name: "Pro", price: "3,500 บาท", features: ["หลายหน้า", "ระบบสมาชิก", "แก้ไขฟรี 7 วัน"] },
+              { name: "Ultimate", price: "7,000 บาท", features: ["ระบบเติมเกม", "ระบบตัวแทน", "ดูแล 30 วัน"] },
+            ].map((pkg, i) => (
+              <Card key={i} className="rounded-2xl bg-gray-900 shadow-2xl">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-2xl font-bold">{pkg.name}</h3>
+                  <p className="text-xl">{pkg.price}</p>
+                  <ul className="text-sm text-gray-400 space-y-2">
+                    {pkg.features.map((f, idx) => (
+                      <li key={idx}>• {f}</li>
+                    ))}
+                  </ul>
+                  <Button className="w-full rounded-2xl">เลือกแพ็กเกจ</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* How We Work */}
+        <div className="space-y-6 text-center">
+          <h2 className="text-3xl font-bold">ขั้นตอนการทำงาน</h2>
+          <p className="text-gray-400">1. คุยรายละเอียดงาน → 2. สรุปราคา → 3. มัดจำ 50% → 4. พัฒนา → 5. ส่งงาน → 6. ชำระส่วนที่เหลือ</p>
+        </div>
+
+        {/* Contact */}
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-bold">ติดต่อจ้างงาน</h2>
+          <p className="text-gray-400">Line: @devnatt | Facebook: DevNatt Studio</p>
+          <Button className="rounded-2xl px-10 py-6 text-lg">ทักเลย</Button>
+        </div>
+
+      </div>
     </div>
-
-    <p id="msg"></p>
-  </div>
-</div>
-
-<div id="app" style="display:none;">
-  <nav id="navbar"></nav>
-  <div id="shop" class="section"></div>
-  <div id="orders" class="section"></div>
-  <div id="admin" class="section"></div>
-</div>
-
-<script>
-const supabase = window.supabase.createClient(
-"https://fmykgxcnrbzjcwsezthk.supabase.co",
-"sb_publishable_AwAtOhcZiPWiz-VQuKPjWQ_XGvll29G"
-)
-
-const adminPhone="0637695934"
-
-let user=null
-let isAdmin=false
-
-async function sendOTP(){
-  const phone=document.getElementById("phone").value.trim()
-  const formatted='+66'+phone.substring(1)
-
-  const { error } = await supabase.auth.signInWithOtp({
-    phone: formatted
-  })
-
-  if(error){
-    msg.innerText=error.message
-  }else{
-    msg.innerText="ส่ง OTP แล้ว"
-    otpBox.style.display="block"
-  }
+  );
 }
-
-async function verifyOTP(){
-  const phone=document.getElementById("phone").value.trim()
-  const token=document.getElementById("otp").value.trim()
-  const formatted='+66'+phone.substring(1)
-
-  const { data, error } = await supabase.auth.verifyOtp({
-    phone: formatted,
-    token: token,
-    type: 'sms'
-  })
-
-  if(error){
-    msg.innerText=error.message
-    return
-  }
-
-  user=data.user
-  if(phone===adminPhone) isAdmin=true
-  startApp()
-}
-
-function startApp(){
-  document.getElementById("auth").style.display="none"
-  document.getElementById("app").style.display="block"
-  buildNav()
-  show("shop")
-  loadProducts()
-  loadOrders()
-}
-
-function buildNav(){
-  navbar.innerHTML=`
-    <button onclick="show('shop')">สินค้า</button>
-    <button onclick="show('orders')">ออเดอร์</button>
-    ${isAdmin?'<button onclick="show(\'admin\')">แอดมิน</button>':''}
-    <button onclick="logout()">ออก</button>
-  `
-}
-
-function show(sec){
-  document.querySelectorAll(".section").forEach(s=>s.style.display="none")
-  document.getElementById(sec).style.display="block"
-}
-
-async function loadProducts(){
-  const { data } = await supabase.from("products").select("*")
-  shop.innerHTML="<h2>สินค้า</h2><div class='grid'></div>"
-  const grid=shop.querySelector(".grid")
-
-  data?.forEach(p=>{
-    grid.innerHTML+=`
-    <div class="card">
-      <img src="${p.image||'https://via.placeholder.com/300'}">
-      <h4>${p.name}</h4>
-      <div>${p.price} บาท</div>
-      <button onclick="order('${p.name}',${p.price})">สั่งซื้อ</button>
-    </div>`
-  })
-}
-
-async function order(name,price){
-  await supabase.from("orders").insert([{
-    user_email:user.phone,
-    product_name:name,
-    price:price
-  }])
-
-  const qr=`https://promptpay.io/0637695934/${price}.png`
-
-  orders.innerHTML=`
-    <div class="card">
-      <h3>สแกนจ่าย ${price} บาท</h3>
-      <img src="${qr}">
-    </div>
-  `
-
-  show("orders")
-}
-
-async function loadOrders(){
-  const { data } = await supabase.from("orders").select("*")
-  orders.innerHTML="<h2>ออเดอร์</h2>"
-
-  data?.forEach(o=>{
-    if(isAdmin || o.user_email===user.phone){
-      orders.innerHTML+=`
-      <div class="card">
-        <div>${o.product_name}</div>
-        <div>${o.price} บาท</div>
-      </div>`
-    }
-  })
-
-  if(isAdmin) buildAdmin()
-}
-
-function buildAdmin(){
-  admin.innerHTML=`
-    <h2>เพิ่มสินค้า</h2>
-    <input id="pname" placeholder="ชื่อสินค้า">
-    <input id="pprice" type="number" placeholder="ราคา">
-    <input id="pimage" placeholder="ลิงก์รูป">
-    <button onclick="addProduct()">เพิ่ม</button>
-  `
-}
-
-async function addProduct(){
-  const name=pname.value
-  const price=pprice.value
-  const image=pimage.value
-  await supabase.from("products").insert([{name,price,image}])
-  alert("เพิ่มสินค้าแล้ว")
-  loadProducts()
-}
-
-function logout(){
-  supabase.auth.signOut()
-  location.reload()
-}
-</script>
-</body>
-</html>
